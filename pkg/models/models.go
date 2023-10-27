@@ -1,6 +1,7 @@
 package models
 
 type Stage string
+type Variable map[string]string
 
 type JobFile struct {
 	Stages []Stage `yaml:"stages"`
@@ -8,10 +9,10 @@ type JobFile struct {
 }
 
 type Job struct {
-	Name      string   `yaml:"name"`
-	Stage     Stage    `yaml:"stage"`
-	Variables []string `yaml:"variables"`
-	Image     string   `yaml:"image"`
-	Script    []string `yaml:"script"`
-	Artifacts []string `yaml:"artifacts"`
+	Name      string     `yaml:"name"`
+	Stage     Stage      `yaml:"stage"`
+	Variables []Variable `yaml:"variables"`
+	Image     string     `yaml:"image"`
+	Script    []string   `yaml:"script"`
+	Artifacts []string   `yaml:"artifacts"`
 }

@@ -15,6 +15,8 @@ jobs:
   - name: Build job
     stage: build
     image: "docker.io/alpine"
+    variables:
+      - TEST: testing123
     script:
       - echo "Building project"
       - echo "Completed build"

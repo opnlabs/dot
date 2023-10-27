@@ -2,10 +2,12 @@ package runner
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"strings"
 
+	"github.com/cvhariharan/done/pkg/models"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -27,8 +29,17 @@ func (d DockerRunner) WithImage(image string) DockerRunner {
 	return d
 }
 
-func (d DockerRunner) WithEnv(env []string) DockerRunner {
-	d.env = env
+func (d DockerRunner) WithEnv(env []models.Variable) DockerRunner {
+	variables := make([]string, 0)
+	for _, v := range env {
+		if len(v) > 1 {
+			log.Fatal("variables should be defined as a key value pair")
+		}
+		for k, v := range v {
+			variables = append(variables, fmt.Sprintf("%s=%s", k, v))
+		}
+	}
+	d.env = variables
 	return d
 }
 

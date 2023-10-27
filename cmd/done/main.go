@@ -46,7 +46,8 @@ func main() {
 			go func(job models.Job) {
 				runner.NewDockerRunner(strings.ReplaceAll(job.Name, " ", "")).
 					WithImage(job.Image).
-					WithCmd(job.Script).Run(os.Stdout)
+					WithCmd(job.Script).
+					WithEnv(job.Variables).Run(os.Stdout)
 				wg.Done()
 			}(job)
 		}
