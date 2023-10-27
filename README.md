@@ -17,8 +17,10 @@ jobs:
     image: "docker.io/alpine"
     variables:
       - TEST: testing123
+    src: ./pkg
     script:
-      - echo "Building project"
+      - ls -al
+      - echo "Building $TEST"
       - echo "Completed build"
     artifacts:
       - target/build
