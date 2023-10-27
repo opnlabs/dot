@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/cvhariharan/done/pkg/models"
@@ -44,8 +43,9 @@ func main() {
 		for _, job := range stageMap[v] {
 			wg.Add(1)
 			go func(job models.Job) {
-				runner.NewDockerRunner(strings.ReplaceAll(job.Name, " ", "")).
+				runner.NewDockerRunner(job.Name).
 					WithImage(job.Image).
+					WithSrc(job.Src).
 					WithCmd(job.Script).
 					WithEnv(job.Variables).Run(os.Stdout)
 				wg.Done()

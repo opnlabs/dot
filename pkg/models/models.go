@@ -10,6 +10,7 @@ type JobFile struct {
 
 type Job struct {
 	Name      string     `yaml:"name"`
+	Src       string     `yaml:"src"`
 	Stage     Stage      `yaml:"stage"`
 	Variables []Variable `yaml:"variables"`
 	Image     string     `yaml:"image"`
