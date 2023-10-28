@@ -9,17 +9,23 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cvhariharan/done/pkg/artifacts"
 	"github.com/cvhariharan/done/pkg/models"
+	"github.com/cvhariharan/done/pkg/store"
+	"github.com/cvhariharan/done/pkg/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
-	"github.com/hashicorp/go-getter"
 )
 
-const ARTIFACT_DIR = ".done"
+const (
+	BUILD_DIR     = ".done"
+	ARTIFACTS_DIR = ".artifacts"
+	WORKING_DIR   = "/app"
+)
 
 type DockerRunner struct {
 	name             string
@@ -29,15 +35,23 @@ type DockerRunner struct {
 	cmd              []string
 	containerID      string
 	workingDirectory string
+	artifacts        []string
+	artifactStore    store.Store
+	artifactManager  artifacts.ArtifactManager
 }
 
-func NewDockerRunner(name string) *DockerRunner {
+func NewDockerRunner(name string, artifactManager artifacts.ArtifactManager) *DockerRunner {
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 	jobName := slug.Make(name + uuid.NewString())
-	return &DockerRunner{name: jobName, workingDirectory: wd}
+	return &DockerRunner{
+		name:             jobName,
+		workingDirectory: wd,
+		artifactStore:    store.NewMemStore(),
+		artifactManager:  artifactManager,
+	}
 }
 
 func (d *DockerRunner) WithImage(image string) *DockerRunner {
@@ -46,10 +60,7 @@ func (d *DockerRunner) WithImage(image string) *DockerRunner {
 }
 
 func (d *DockerRunner) WithSrc(src string) *DockerRunner {
-	if src == "" {
-		src = d.workingDirectory
-	}
-	d.src = src
+	d.src = filepath.Clean(src)
 	return d
 }
 
@@ -72,6 +83,11 @@ func (d *DockerRunner) WithCmd(cmd []string) *DockerRunner {
 	return d
 }
 
+func (d *DockerRunner) CreatesArtifacts(artifacts []string) *DockerRunner {
+	d.artifacts = artifacts
+	return d
+}
+
 func (d *DockerRunner) Run(output io.Writer) error {
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -86,20 +102,23 @@ func (d *DockerRunner) Run(output io.Writer) error {
 	}
 	io.Copy(output, reader)
 
-	d.createSrcDirectories()
+	err = d.createSrcDirectories(cli)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	commandScript := strings.Join(d.cmd, "; ")
+	commandScript := strings.Join(d.cmd, "\n")
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image:      d.image,
 		Env:        d.env,
 		Cmd:        []string{"/bin/sh", "-c", commandScript},
-		WorkingDir: "/app",
+		WorkingDir: WORKING_DIR,
 	}, &container.HostConfig{
 		Mounts: []mount.Mount{
 			{
 				Type:   mount.TypeBind,
-				Source: filepath.Join(d.workingDirectory, ARTIFACT_DIR, fmt.Sprintf("src-%s", d.name)),
-				Target: "/app",
+				Source: filepath.Join(d.workingDirectory, BUILD_DIR, fmt.Sprintf("src-%s", d.name)),
+				Target: WORKING_DIR,
 			},
 		},
 	}, nil, nil, d.name)
@@ -108,6 +127,11 @@ func (d *DockerRunner) Run(output io.Writer) error {
 	}
 	d.containerID = resp.ID
 	defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+
+	err = d.artifactManager.RetrieveArtifact(d.containerID, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		log.Fatal(err)
@@ -130,33 +154,16 @@ func (d *DockerRunner) Run(output io.Writer) error {
 	case <-statusCh:
 	}
 
+	for _, v := range d.artifacts {
+		_, err = d.artifactManager.PublishArtifact(d.containerID, filepath.Join(WORKING_DIR, v))
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	return nil
 }
 
-func (d *DockerRunner) createSrcDirectories() error {
-	client := &getter.Client{
-		Ctx:  context.Background(),
-		Dst:  filepath.Join(d.workingDirectory, ARTIFACT_DIR, fmt.Sprintf("src-%s", d.name)),
-		Dir:  true,
-		Src:  d.src,
-		Pwd:  d.workingDirectory,
-		Mode: getter.ClientModeDir,
-		Detectors: []getter.Detector{
-			&getter.FileDetector{},
-			&getter.GitDetector{},
-			&getter.GitHubDetector{},
-			&getter.GitLabDetector{},
-		},
-		Getters: map[string]getter.Getter{
-			"file": &getter.FileGetter{
-				Copy: true,
-			},
-		},
-	}
-
-	if err := client.Get(); err != nil {
-		log.Fatal(err)
-	}
-
-	return nil
+func (d *DockerRunner) createSrcDirectories(cli *client.Client) error {
+	return utils.TarCopy(d.src, filepath.Join(BUILD_DIR, fmt.Sprintf("src-%s", d.name)), "")
 }
