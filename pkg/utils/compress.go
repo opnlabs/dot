@@ -103,7 +103,7 @@ func Decompress(tarPath, baseDir string) error {
 	}
 }
 
-// DecompressTar takes a location to a .tar.gzip file and a base path and
+// DecompressTar takes a location to a .tar file and a base path and
 // decompresses the contents wrt the base path
 func DecompressTar(tarPath, baseDir string) error {
 	tarFile, err := os.Open(tarPath)
@@ -112,13 +112,6 @@ func DecompressTar(tarPath, baseDir string) error {
 		return err
 	}
 	defer tarFile.Close()
-
-	// gzr, err := gzip.NewReader(tarFile)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return err
-	// }
-	// defer gzr.Close()
 
 	tr := tar.NewReader(tarFile)
 	for {

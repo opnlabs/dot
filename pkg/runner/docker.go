@@ -98,21 +98,28 @@ func (d *DockerRunner) Run(logOptions LogOptions) error {
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 	defer cli.Close()
 
 	reader, err := cli.ImagePull(ctx, d.image, types.ImagePullOptions{})
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 	if logOptions.ShowImagePull {
-		io.Copy(logOptions.Stdout, reader)
+		_, err = io.Copy(logOptions.Stdout, reader)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
 	}
 
 	err = d.createSrcDirectories(cli)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 
 	commandScript := strings.Join(d.cmd, "\n")
@@ -131,18 +138,21 @@ func (d *DockerRunner) Run(logOptions LogOptions) error {
 		},
 	}, nil, nil, d.name)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 	d.containerID = resp.ID
 	defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
 
 	err = d.artifactManager.RetrieveArtifact(d.containerID, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 
 	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 
 	logs, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{
@@ -151,21 +161,28 @@ func (d *DockerRunner) Run(logOptions LogOptions) error {
 		Follow:     true,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
-	io.Copy(logOptions.Stdout, logs)
+	_, err = io.Copy(logOptions.Stdout, logs)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 
 	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	case <-statusCh:
 	}
 
 	for _, v := range d.artifacts {
 		_, err = d.artifactManager.PublishArtifact(d.containerID, filepath.Join(WORKING_DIR, v))
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			return err
 		}
 	}
 

@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 	"os"
-	"sync"
 
 	"github.com/cvhariharan/done/pkg/artifacts"
 	"github.com/cvhariharan/done/pkg/models"
 	"github.com/cvhariharan/done/pkg/runner"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
 )
 
@@ -41,22 +41,25 @@ func main() {
 		stageMap[v.Stage] = append(stageMap[v.Stage], v)
 	}
 
-	dockerArtifactManager := artifacts.NewDockerArtifactsManager()
+	dockerArtifactManager := artifacts.NewDockerArtifactsManager(".artifacts")
 
 	for _, v := range jobFile.Stages {
-		var wg sync.WaitGroup
+		var eg errgroup.Group
 		for _, job := range stageMap[v] {
-			wg.Add(1)
-			go func(job models.Job) {
-				runner.NewDockerRunner(job.Name, dockerArtifactManager).
-					WithImage(job.Image).
-					WithSrc(job.Src).
-					WithCmd(job.Script).
-					WithEnv(job.Variables).
-					CreatesArtifacts(job.Artifacts).Run(runner.LogOptions{ShowImagePull: true, Stdout: os.Stdout, Stderr: os.Stderr})
-				wg.Done()
+			func(job models.Job) {
+				eg.Go(func() error {
+					return runner.NewDockerRunner(job.Name, dockerArtifactManager).
+						WithImage(job.Image).
+						WithSrc(job.Src).
+						WithCmd(job.Script).
+						WithEnv(job.Variables).
+						CreatesArtifacts(job.Artifacts).Run(runner.LogOptions{ShowImagePull: true, Stdout: os.Stdout, Stderr: os.Stderr})
+				})
 			}(job)
 		}
-		wg.Wait()
+		err := eg.Wait()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }

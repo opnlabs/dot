@@ -14,8 +14,6 @@ import (
 	"github.com/docker/docker/client"
 )
 
-const ARTIFACTS_DIR = ".artifacts"
-
 type ArtifactManager interface {
 	// PublishArtifact takes in a jobID and path inside the job and
 	// moves the artifact to the artifact stores and returns a key
@@ -32,14 +30,15 @@ type ArtifactManager interface {
 type DockerArtifactsManager struct {
 	cli           *client.Client
 	artifactStore store.Store
+	artifactsDir  string
 }
 
-func NewDockerArtifactsManager() ArtifactManager {
+func NewDockerArtifactsManager(artifactsDir string) ArtifactManager {
 	// Clear previous artifacts and create a new directory
-	if _, err := os.Stat(ARTIFACTS_DIR); err == nil {
-		os.RemoveAll(ARTIFACTS_DIR)
+	if _, err := os.Stat(artifactsDir); err == nil {
+		os.RemoveAll(artifactsDir)
 	}
-	os.Mkdir(ARTIFACTS_DIR, 0755)
+	os.Mkdir(artifactsDir, 0755)
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -49,6 +48,7 @@ func NewDockerArtifactsManager() ArtifactManager {
 	return &DockerArtifactsManager{
 		cli:           cli,
 		artifactStore: store.NewMemStore(),
+		artifactsDir:  artifactsDir,
 	}
 }
 
@@ -59,7 +59,7 @@ func (d *DockerArtifactsManager) PublishArtifact(jobID, path string) (string, er
 		return "", err
 	}
 
-	f, err := os.CreateTemp(ARTIFACTS_DIR, "artifacts-*.tar")
+	f, err := os.CreateTemp(d.artifactsDir, "artifacts-*.tar")
 	if err != nil {
 		return "", err
 	}
@@ -95,7 +95,7 @@ func (d *DockerArtifactsManager) RetrieveArtifact(jobID string, keys []string) e
 		}
 	}
 
-	return filepath.Walk(ARTIFACTS_DIR, func(path string, info fs.FileInfo, err error) error {
+	return filepath.Walk(d.artifactsDir, func(path string, info fs.FileInfo, err error) error {
 		if !strings.Contains(path, ".tar") {
 			return nil
 		}

@@ -41,7 +41,7 @@ func teardown(tb testing.TB) {
 func TestRun(t *testing.T) {
 
 	var b bytes.Buffer
-	manager := artifacts.NewDockerArtifactsManager()
+	manager := artifacts.NewDockerArtifactsManager(".artifacts")
 
 	tests := []Test{
 		{
