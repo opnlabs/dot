@@ -53,7 +53,7 @@ func main() {
 					WithSrc(job.Src).
 					WithCmd(job.Script).
 					WithEnv(job.Variables).
-					CreatesArtifacts(job.Artifacts).Run(os.Stdout)
+					CreatesArtifacts(job.Artifacts).Run(runner.LogOptions{ShowImagePull: true, Stdout: os.Stdout, Stderr: os.Stderr})
 				wg.Done()
 			}(job)
 		}

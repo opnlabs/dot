@@ -27,6 +27,12 @@ const (
 	WORKING_DIR   = "/app"
 )
 
+type LogOptions struct {
+	ShowImagePull bool
+	Stdout        io.Writer
+	Stderr        io.Writer
+}
+
 type DockerRunner struct {
 	name             string
 	image            string
@@ -88,7 +94,7 @@ func (d *DockerRunner) CreatesArtifacts(artifacts []string) *DockerRunner {
 	return d
 }
 
-func (d *DockerRunner) Run(output io.Writer) error {
+func (d *DockerRunner) Run(logOptions LogOptions) error {
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -100,7 +106,9 @@ func (d *DockerRunner) Run(output io.Writer) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	io.Copy(output, reader)
+	if logOptions.ShowImagePull {
+		io.Copy(logOptions.Stdout, reader)
+	}
 
 	err = d.createSrcDirectories(cli)
 	if err != nil {
@@ -145,7 +153,7 @@ func (d *DockerRunner) Run(output io.Writer) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	io.Copy(output, logs)
+	io.Copy(logOptions.Stdout, logs)
 
 	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
 	select {

@@ -103,6 +103,57 @@ func Decompress(tarPath, baseDir string) error {
 	}
 }
 
+// DecompressTar takes a location to a .tar.gzip file and a base path and
+// decompresses the contents wrt the base path
+func DecompressTar(tarPath, baseDir string) error {
+	tarFile, err := os.Open(tarPath)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	defer tarFile.Close()
+
+	// gzr, err := gzip.NewReader(tarFile)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return err
+	// }
+	// defer gzr.Close()
+
+	tr := tar.NewReader(tarFile)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			return nil
+		} else if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		target := filepath.Join(baseDir, header.Name)
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, fs.FileMode(header.Mode)); err != nil {
+					return err
+				}
+			}
+		case tar.TypeReg:
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, 0755)
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+			defer f.Close()
+
+			if _, err := io.Copy(f, tr); err != nil {
+				log.Println(err)
+				return err
+			}
+		}
+	}
+}
+
 // TarCopy uses tar archive to copy src to dst to preserve the folder structure
 func TarCopy(src, dst, tempDir string) error {
 	f, err := os.CreateTemp(tempDir, "tarcopy-*.tar.gzip")
