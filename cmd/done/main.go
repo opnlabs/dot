@@ -9,9 +9,12 @@ import (
 	"github.com/cvhariharan/done/pkg/artifacts"
 	"github.com/cvhariharan/done/pkg/models"
 	"github.com/cvhariharan/done/pkg/runner"
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
 )
+
+var validate *validator.Validate
 
 func main() {
 	ctx := context.Background()
@@ -31,6 +34,12 @@ func main() {
 	err = yaml.Unmarshal(contents, &jobFile)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	validate = validator.New(validator.WithRequiredStructEnabled())
+	err = validate.Struct(jobFile)
+	if err != nil {
+		log.Fatalf("Err(s):\n%+v\n", err)
 	}
 
 	stageMap := make(map[models.Stage][]models.Job)
