@@ -2,6 +2,7 @@ package artifacts
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"log"
@@ -56,16 +57,16 @@ func (d *DockerArtifactsManager) PublishArtifact(jobID, path string) (string, er
 	ctx := context.Background()
 	r, _, err := d.cli.CopyFromContainer(ctx, jobID, path)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not copy artifact %s from container %s: %v", path, jobID, err)
 	}
 
 	f, err := os.CreateTemp(d.artifactsDir, "artifacts-*.tar")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not create artifacts tar file: %v", err)
 	}
-	_, err = io.Copy(f, r)
-	if err != nil {
-		return "", err
+
+	if _, err := io.Copy(f, r); err != nil {
+		return "", fmt.Errorf("could not copy file contents from container %s to artifact tar: %v", jobID, err)
 	}
 
 	_, fname := filepath.Split(f.Name())
@@ -79,18 +80,16 @@ func (d *DockerArtifactsManager) RetrieveArtifact(jobID string, keys []string) e
 		for _, v := range keys {
 			originalPath, err := d.artifactStore.Get(strings.TrimSpace(v))
 			if err != nil {
-				return err
+				return fmt.Errorf("could not find original path for artifact %s: %v", v, err)
 			}
 			f, err := os.Open(v)
 			if err != nil {
-				log.Println(err)
-				return err
+				return fmt.Errorf("could not open artifact %s: %v", v, err)
 			}
 			defer f.Close()
 
-			err = d.cli.CopyToContainer(ctx, jobID, originalPath.(string), f, types.CopyToContainerOptions{})
-			if err != nil {
-				return err
+			if err := d.cli.CopyToContainer(ctx, jobID, originalPath.(string), f, types.CopyToContainerOptions{}); err != nil {
+				return fmt.Errorf("could not copy artifact %s to container %s: %v", v, jobID, err)
 			}
 		}
 	}
@@ -102,16 +101,14 @@ func (d *DockerArtifactsManager) RetrieveArtifact(jobID string, keys []string) e
 
 		f, err := os.Open(path)
 		if err != nil {
-			log.Println(err)
-			return err
+			return fmt.Errorf("could not open %s artifact for copying to container %s: %v", path, jobID, err)
 		}
 		defer f.Close()
 
 		_, fname := filepath.Split(path)
-		log.Println("Retrieve name: ", fname)
 		originalPath, err := d.artifactStore.Get(strings.TrimSpace(fname))
 		if err != nil {
-			log.Fatal(err)
+			return fmt.Errorf("could not get %s from artifact store: %v", fname, err)
 		}
 
 		return d.cli.CopyToContainer(context.Background(), jobID, originalPath.(string), f, types.CopyToContainerOptions{})

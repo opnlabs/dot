@@ -2,6 +2,7 @@ package runner
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"os"
@@ -24,6 +25,7 @@ type Test struct {
 	Variables   []models.Variable
 	Artifacts   []string
 	Output      io.Writer
+	Ctx         context.Context
 	Expectation func(*testing.T, *bytes.Buffer) bool
 }
 
@@ -42,6 +44,9 @@ func TestRun(t *testing.T) {
 
 	var b bytes.Buffer
 	manager := artifacts.NewDockerArtifactsManager(".artifacts")
+	ctx := context.Background()
+	// ctxTimeout, cancel := context.WithTimeout(ctx, time.Millisecond)
+	// defer cancel()
 
 	tests := []Test{
 		{
@@ -53,6 +58,7 @@ func TestRun(t *testing.T) {
 			},
 			Output:      &b,
 			Expectation: testImageOutput,
+			Ctx:         ctx,
 		},
 		{
 			Name:    "Test Variables",
@@ -68,6 +74,7 @@ func TestRun(t *testing.T) {
 			},
 			Output:      &b,
 			Expectation: testVariableOutput,
+			Ctx:         ctx,
 		},
 		{
 			Name:    "Test Create Artifact",
@@ -81,6 +88,7 @@ func TestRun(t *testing.T) {
 				"log.txt",
 			},
 			Expectation: testArtifactCreation,
+			Ctx:         ctx,
 		},
 		{
 			Name:    "Test Retrieve Artifact",
@@ -91,17 +99,29 @@ func TestRun(t *testing.T) {
 			},
 			Output:      &b,
 			Expectation: testVariableOutput,
+			Ctx:         ctx,
 		},
+		// {
+		// 	Name:    "Test Timeout",
+		// 	Manager: manager,
+		// 	Image:   "docker.io/alpine",
+		// 	Script: []string{
+		// 		"sleep 10",
+		// 	},
+		// 	Output:      &b,
+		// 	Expectation: testTimeoutOutput,
+		// 	Ctx:         ctxTimeout,
+		// },
 	}
 
 	for _, test := range tests {
 		b.Truncate(0)
-		NewDockerRunner(test.Name, test.Manager).
+		NewDockerRunner(test.Name, test.Manager, LogOptions{ShowImagePull: false, Stdout: test.Output, Stderr: os.Stderr}).
 			WithImage(test.Image).
 			WithSrc(test.Src).
 			WithCmd(test.Script).
 			WithEnv(test.Variables).
-			CreatesArtifacts(test.Artifacts).Run(LogOptions{ShowImagePull: false, Stdout: test.Output, Stderr: os.Stderr})
+			CreatesArtifacts(test.Artifacts).Run(test.Ctx)
 
 		if !test.Expectation(t, &b) {
 			t.Errorf("Test - %s: failed", test.Name)
@@ -163,4 +183,10 @@ func testArtifactCreation(t *testing.T, b *bytes.Buffer) bool {
 		}
 	}
 	return false
+}
+
+func testTimeoutOutput(t *testing.T, b *bytes.Buffer) bool {
+	str := b.String()
+	str = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(str, "")
+	return (strings.Compare(strings.TrimSpace(str), "context timed out") == 0)
 }

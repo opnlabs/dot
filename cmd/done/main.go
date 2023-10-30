@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
+	"time"
 
 	"github.com/cvhariharan/done/pkg/artifacts"
 	"github.com/cvhariharan/done/pkg/models"
@@ -12,6 +14,8 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	if len(os.Args) != 2 {
@@ -46,14 +50,17 @@ func main() {
 	for _, v := range jobFile.Stages {
 		var eg errgroup.Group
 		for _, job := range stageMap[v] {
+			jobCtx, cancel := context.WithTimeout(ctx, time.Hour)
+			defer cancel()
+
 			func(job models.Job) {
 				eg.Go(func() error {
-					return runner.NewDockerRunner(job.Name, dockerArtifactManager).
+					return runner.NewDockerRunner(job.Name, dockerArtifactManager, runner.LogOptions{ShowImagePull: true, Stdout: os.Stdout, Stderr: os.Stderr}).
 						WithImage(job.Image).
 						WithSrc(job.Src).
 						WithCmd(job.Script).
 						WithEnv(job.Variables).
-						CreatesArtifacts(job.Artifacts).Run(runner.LogOptions{ShowImagePull: true, Stdout: os.Stdout, Stderr: os.Stderr})
+						CreatesArtifacts(job.Artifacts).Run(jobCtx)
 				})
 			}(job)
 		}

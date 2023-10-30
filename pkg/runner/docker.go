@@ -11,7 +11,6 @@ import (
 
 	"github.com/cvhariharan/done/pkg/artifacts"
 	"github.com/cvhariharan/done/pkg/models"
-	"github.com/cvhariharan/done/pkg/store"
 	"github.com/cvhariharan/done/pkg/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -42,21 +41,29 @@ type DockerRunner struct {
 	containerID      string
 	workingDirectory string
 	artifacts        []string
-	artifactStore    store.Store
 	artifactManager  artifacts.ArtifactManager
+	logOptions       LogOptions
 }
 
-func NewDockerRunner(name string, artifactManager artifacts.ArtifactManager) *DockerRunner {
+func NewDockerRunner(name string, artifactManager artifacts.ArtifactManager, logOptions LogOptions) *DockerRunner {
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 	jobName := slug.Make(name + uuid.NewString())
+
+	if logOptions.Stdout == nil {
+		logOptions.Stdout = os.Stdout
+	}
+	if logOptions.Stderr == nil {
+		logOptions.Stdout = os.Stderr
+	}
+
 	return &DockerRunner{
 		name:             jobName,
 		workingDirectory: wd,
-		artifactStore:    store.NewMemStore(),
 		artifactManager:  artifactManager,
+		logOptions:       logOptions,
 	}
 }
 
@@ -73,6 +80,7 @@ func (d *DockerRunner) WithSrc(src string) *DockerRunner {
 func (d *DockerRunner) WithEnv(env []models.Variable) *DockerRunner {
 	variables := make([]string, 0)
 	for _, v := range env {
+		// TODO - Move this to a validation function
 		if len(v) > 1 {
 			log.Fatal("variables should be defined as a key value pair")
 		}
@@ -94,32 +102,26 @@ func (d *DockerRunner) CreatesArtifacts(artifacts []string) *DockerRunner {
 	return d
 }
 
-func (d *DockerRunner) Run(logOptions LogOptions) error {
-	ctx := context.Background()
+func (d *DockerRunner) Run(ctx context.Context) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("unable to create docker client to create container %s: %v", d.name, err)
 	}
 	defer cli.Close()
 
 	reader, err := cli.ImagePull(ctx, d.image, types.ImagePullOptions{})
 	if err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("unable to pull image to create container %s: %v", d.name, err)
 	}
-	if logOptions.ShowImagePull {
-		_, err = io.Copy(logOptions.Stdout, reader)
-		if err != nil {
-			log.Println(err)
-			return err
+	defer reader.Close()
+	if d.logOptions.ShowImagePull {
+		if _, err := io.Copy(d.logOptions.Stdout, reader); err != nil {
+			return fmt.Errorf("unable to read image pull logs for %s: %v", d.name, err)
 		}
 	}
 
-	err = d.createSrcDirectories(cli)
-	if err != nil {
-		log.Println(err)
-		return err
+	if err := d.createSrcDirectories(cli); err != nil {
+		return fmt.Errorf("unable to create source directories for %s: %v", d.name, err)
 	}
 
 	commandScript := strings.Join(d.cmd, "\n")
@@ -138,21 +140,17 @@ func (d *DockerRunner) Run(logOptions LogOptions) error {
 		},
 	}, nil, nil, d.name)
 	if err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("unable to create container %s: %v", d.name, err)
 	}
 	d.containerID = resp.ID
 	defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
 
-	err = d.artifactManager.RetrieveArtifact(d.containerID, nil)
-	if err != nil {
-		log.Println(err)
-		return err
+	if err := d.artifactManager.RetrieveArtifact(d.containerID, nil); err != nil {
+		return fmt.Errorf("unable to retrieve artifacts for %s: %v", d.name, err)
 	}
 
 	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("unable to start container %s: %v", d.name, err)
 	}
 
 	logs, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{
@@ -161,29 +159,24 @@ func (d *DockerRunner) Run(logOptions LogOptions) error {
 		Follow:     true,
 	})
 	if err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("unable to attach logs for %s: %v", d.name, err)
 	}
-	_, err = io.Copy(logOptions.Stdout, logs)
-	if err != nil {
-		log.Println(err)
-		return err
+	defer logs.Close()
+
+	if _, err := io.Copy(d.logOptions.Stdout, logs); err != nil {
+		return fmt.Errorf("unable to read container logs from %s: %v", d.name, err)
 	}
 
 	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
-		log.Println(err)
-		return err
+		return fmt.Errorf("error waiting for container %s to stop: %v", d.name, err)
 	case <-statusCh:
-	}
-
-	for _, v := range d.artifacts {
-		_, err = d.artifactManager.PublishArtifact(d.containerID, filepath.Join(WORKING_DIR, v))
-		if err != nil {
-			log.Println(err)
-			return err
+		if err := d.publishArtifacts(); err != nil {
+			return fmt.Errorf("unable to publish artifacts fpr %s: %v", d.name, err)
 		}
+	case <-ctx.Done():
+		return fmt.Errorf("context timed out, stopping container %s", d.name)
 	}
 
 	return nil
@@ -191,4 +184,13 @@ func (d *DockerRunner) Run(logOptions LogOptions) error {
 
 func (d *DockerRunner) createSrcDirectories(cli *client.Client) error {
 	return utils.TarCopy(d.src, filepath.Join(BUILD_DIR, fmt.Sprintf("src-%s", d.name)), "")
+}
+
+func (d *DockerRunner) publishArtifacts() error {
+	for _, v := range d.artifacts {
+		if _, err := d.artifactManager.PublishArtifact(d.containerID, filepath.Join(WORKING_DIR, v)); err != nil {
+			return err
+		}
+	}
+	return nil
 }

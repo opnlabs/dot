@@ -3,9 +3,9 @@ package utils
 import (
 	"archive/tar"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -15,7 +15,7 @@ import (
 func Compress(path, outputPath string) error {
 	tarFile, err := os.Create(outputPath)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("could not create tar.gzip file %s: %v", outputPath, err)
 	}
 	defer tarFile.Close()
 
@@ -28,23 +28,20 @@ func Compress(path, outputPath string) error {
 	return filepath.Walk(path, func(path string, info fs.FileInfo, err error) error {
 		header, err := tar.FileInfoHeader(info, path)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not create tar.gzip file %s: %v", path, err)
 		}
 		header.Name = filepath.ToSlash(path)
 		if err := tw.WriteHeader(header); err != nil {
-			log.Println(err)
-			return err
+			return fmt.Errorf("could not create tar.gzip file %s: %v", path, err)
 		}
 
 		if !info.IsDir() {
 			data, err := os.Open(path)
 			if err != nil {
-				log.Println(err)
-				return err
+				return fmt.Errorf("could not open file %s: %v", path, err)
 			}
 			if _, err := io.Copy(tw, data); err != nil {
-				log.Println(err, header.Name, header.Size)
-				return err
+				return fmt.Errorf("could not copy tar.gzip contents for file %s: %v", path, err)
 			}
 			data.Close()
 		}
@@ -57,15 +54,13 @@ func Compress(path, outputPath string) error {
 func Decompress(tarPath, baseDir string) error {
 	tarFile, err := os.Open(tarPath)
 	if err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("could not open tar.gzip file %s: %v", tarPath, err)
 	}
 	defer tarFile.Close()
 
 	gzr, err := gzip.NewReader(tarFile)
 	if err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("could not read tar.gzip file %s: %v", tarPath, err)
 	}
 	defer gzr.Close()
 
@@ -75,8 +70,7 @@ func Decompress(tarPath, baseDir string) error {
 		if err == io.EOF {
 			return nil
 		} else if err != nil {
-			log.Println(err)
-			return err
+			return fmt.Errorf("could not read tar.gzip header %s: %v", header.Name, err)
 		}
 
 		target := filepath.Join(baseDir, header.Name)
@@ -84,20 +78,18 @@ func Decompress(tarPath, baseDir string) error {
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
 				if err := os.MkdirAll(target, fs.FileMode(header.Mode)); err != nil {
-					return err
+					return fmt.Errorf("could not create dir %s: %v", target, err)
 				}
 			}
 		case tar.TypeReg:
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, 0755)
 			if err != nil {
-				log.Println(err)
-				return err
+				return fmt.Errorf("could not open file %s: %v", target, err)
 			}
 			defer f.Close()
 
 			if _, err := io.Copy(f, tr); err != nil {
-				log.Println(err)
-				return err
+				return fmt.Errorf("could not copy tar.gzip contents to file %s: %v", target, err)
 			}
 		}
 	}
@@ -108,8 +100,7 @@ func Decompress(tarPath, baseDir string) error {
 func DecompressTar(tarPath, baseDir string) error {
 	tarFile, err := os.Open(tarPath)
 	if err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("could not open tar file %s: %v", tarPath, err)
 	}
 	defer tarFile.Close()
 
@@ -119,8 +110,7 @@ func DecompressTar(tarPath, baseDir string) error {
 		if err == io.EOF {
 			return nil
 		} else if err != nil {
-			log.Println(err)
-			return err
+			return fmt.Errorf("could not read tar header %s: %v", header.Name, err)
 		}
 
 		target := filepath.Join(baseDir, header.Name)
@@ -128,20 +118,18 @@ func DecompressTar(tarPath, baseDir string) error {
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
 				if err := os.MkdirAll(target, fs.FileMode(header.Mode)); err != nil {
-					return err
+					return fmt.Errorf("could not create dir %s: %v", target, err)
 				}
 			}
 		case tar.TypeReg:
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, 0755)
 			if err != nil {
-				log.Println(err)
-				return err
+				return fmt.Errorf("could not open file %s: %v", target, err)
 			}
 			defer f.Close()
 
 			if _, err := io.Copy(f, tr); err != nil {
-				log.Println(err)
-				return err
+				return fmt.Errorf("could not copy tar contents to file %s: %v", target, err)
 			}
 		}
 	}
@@ -151,19 +139,16 @@ func DecompressTar(tarPath, baseDir string) error {
 func TarCopy(src, dst, tempDir string) error {
 	f, err := os.CreateTemp(tempDir, "tarcopy-*.tar.gzip")
 	if err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("could not create tar.gzip file in %s: %v", tempDir, err)
 	}
 	f.Close()
 
 	if err := Compress(src, f.Name()); err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("could not create %s from src %s: %v", f.Name(), src, err)
 	}
 
 	if err := Decompress(f.Name(), dst); err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("could not decompress %s to dst %s: %v", f.Name(), dst, err)
 	}
 
 	return nil
