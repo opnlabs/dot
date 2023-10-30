@@ -80,7 +80,6 @@ func (d *DockerRunner) WithSrc(src string) *DockerRunner {
 func (d *DockerRunner) WithEnv(env []models.Variable) *DockerRunner {
 	variables := make([]string, 0)
 	for _, v := range env {
-		// TODO - Move this to a validation function
 		if len(v) > 1 {
 			log.Fatal("variables should be defined as a key value pair")
 		}
