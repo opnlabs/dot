@@ -46,7 +46,6 @@ func (m *MemStore) Set(key string, value interface{}) error {
 		return ErrKeyExists
 	}
 	m.store[key] = value
-	log.Println(m.store[key])
 	return nil
 }
 

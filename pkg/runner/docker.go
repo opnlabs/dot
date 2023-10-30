@@ -171,7 +171,10 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 	select {
 	case err := <-errCh:
 		return fmt.Errorf("error waiting for container %s to stop: %v", d.name, err)
-	case <-statusCh:
+	case status := <-statusCh:
+		if status.StatusCode != 0 {
+			return fmt.Errorf("container exited with status code %d", status.StatusCode)
+		}
 		if err := d.publishArtifacts(); err != nil {
 			return fmt.Errorf("unable to publish artifacts fpr %s: %v", d.name, err)
 		}
