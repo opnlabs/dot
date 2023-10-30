@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"time"
@@ -21,11 +22,14 @@ func main() {
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	if len(os.Args) != 2 {
-		log.Fatal("specify the job file")
-	}
+	var jobFilePath string
+	flag.StringVar(&jobFilePath, "f", "done.yml", "Job File Path")
 
-	contents, err := os.ReadFile(os.Args[1])
+	var mountDockerSocket bool
+	flag.BoolVar(&mountDockerSocket, "m", false, "Mount docker socket")
+	flag.Parse()
+
+	contents, err := os.ReadFile(jobFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,7 +68,7 @@ func main() {
 
 			func(job models.Job) {
 				eg.Go(func() error {
-					return runner.NewDockerRunner(job.Name, dockerArtifactManager, runner.LogOptions{ShowImagePull: true, Stdout: os.Stdout, Stderr: os.Stderr}).
+					return runner.NewDockerRunner(job.Name, dockerArtifactManager, runner.DockerRunnerOptions{ShowImagePull: true, Stdout: os.Stdout, Stderr: os.Stderr, MountDockerSocket: mountDockerSocket}).
 						WithImage(job.Image).
 						WithSrc(job.Src).
 						WithCmd(job.Script).

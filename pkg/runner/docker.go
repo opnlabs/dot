@@ -26,10 +26,11 @@ const (
 	WORKING_DIR   = "/app"
 )
 
-type LogOptions struct {
-	ShowImagePull bool
-	Stdout        io.Writer
-	Stderr        io.Writer
+type DockerRunnerOptions struct {
+	ShowImagePull     bool
+	Stdout            io.Writer
+	Stderr            io.Writer
+	MountDockerSocket bool
 }
 
 type DockerRunner struct {
@@ -42,28 +43,28 @@ type DockerRunner struct {
 	workingDirectory string
 	artifacts        []string
 	artifactManager  artifacts.ArtifactManager
-	logOptions       LogOptions
+	dockerOptions    DockerRunnerOptions
 }
 
-func NewDockerRunner(name string, artifactManager artifacts.ArtifactManager, logOptions LogOptions) *DockerRunner {
+func NewDockerRunner(name string, artifactManager artifacts.ArtifactManager, dockerOptions DockerRunnerOptions) *DockerRunner {
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 	jobName := slug.Make(name + uuid.NewString())
 
-	if logOptions.Stdout == nil {
-		logOptions.Stdout = os.Stdout
+	if dockerOptions.Stdout == nil {
+		dockerOptions.Stdout = os.Stdout
 	}
-	if logOptions.Stderr == nil {
-		logOptions.Stdout = os.Stderr
+	if dockerOptions.Stderr == nil {
+		dockerOptions.Stdout = os.Stderr
 	}
 
 	return &DockerRunner{
 		name:             jobName,
 		workingDirectory: wd,
 		artifactManager:  artifactManager,
-		logOptions:       logOptions,
+		dockerOptions:    dockerOptions,
 	}
 }
 
@@ -113,8 +114,8 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to pull image to create container %s: %v", d.name, err)
 	}
 	defer reader.Close()
-	if d.logOptions.ShowImagePull {
-		if _, err := io.Copy(d.logOptions.Stdout, reader); err != nil {
+	if d.dockerOptions.ShowImagePull {
+		if _, err := io.Copy(d.dockerOptions.Stdout, reader); err != nil {
 			return fmt.Errorf("unable to read image pull logs for %s: %v", d.name, err)
 		}
 	}
@@ -123,6 +124,8 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to create source directories for %s: %v", d.name, err)
 	}
 
+	mounts := d.prepareMounts()
+
 	commandScript := strings.Join(d.cmd, "\n")
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image:      d.image,
@@ -130,13 +133,7 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 		Cmd:        []string{"/bin/sh", "-c", commandScript},
 		WorkingDir: WORKING_DIR,
 	}, &container.HostConfig{
-		Mounts: []mount.Mount{
-			{
-				Type:   mount.TypeBind,
-				Source: filepath.Join(d.workingDirectory, BUILD_DIR, fmt.Sprintf("src-%s", d.name)),
-				Target: WORKING_DIR,
-			},
-		},
+		Mounts: mounts,
 	}, nil, nil, d.name)
 	if err != nil {
 		return fmt.Errorf("unable to create container %s: %v", d.name, err)
@@ -162,7 +159,7 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 	}
 	defer logs.Close()
 
-	if _, err := io.Copy(d.logOptions.Stdout, logs); err != nil {
+	if _, err := io.Copy(d.dockerOptions.Stdout, logs); err != nil {
 		return fmt.Errorf("unable to read container logs from %s: %v", d.name, err)
 	}
 
@@ -195,4 +192,23 @@ func (d *DockerRunner) publishArtifacts() error {
 		}
 	}
 	return nil
+}
+
+func (d *DockerRunner) prepareMounts() []mount.Mount {
+	mounts := []mount.Mount{
+		{
+			Type:   mount.TypeBind,
+			Source: filepath.Join(d.workingDirectory, BUILD_DIR, fmt.Sprintf("src-%s", d.name)),
+			Target: WORKING_DIR,
+		},
+	}
+
+	if d.dockerOptions.MountDockerSocket {
+		mounts = append(mounts, mount.Mount{
+			Type:   mount.TypeBind,
+			Source: "/var/run/docker.sock",
+			Target: "/var/run/docker.sock",
+		})
+	}
+	return mounts
 }

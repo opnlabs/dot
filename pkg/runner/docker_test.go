@@ -116,13 +116,15 @@ func TestRun(t *testing.T) {
 
 	for _, test := range tests {
 		b.Truncate(0)
-		NewDockerRunner(test.Name, test.Manager, LogOptions{ShowImagePull: false, Stdout: test.Output, Stderr: os.Stderr}).
+		err := NewDockerRunner(test.Name, test.Manager, DockerRunnerOptions{ShowImagePull: false, Stdout: test.Output, Stderr: os.Stderr}).
 			WithImage(test.Image).
 			WithSrc(test.Src).
 			WithCmd(test.Script).
 			WithEnv(test.Variables).
 			CreatesArtifacts(test.Artifacts).Run(test.Ctx)
-
+		if err != nil {
+			t.Error(err)
+		}
 		if !test.Expectation(t, &b) {
 			t.Errorf("Test - %s: failed", test.Name)
 		}
