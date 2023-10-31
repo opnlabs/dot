@@ -1,4 +1,6 @@
 # Done
+[![Done](https://github.com/cvhariharan/done/actions/workflows/main.yml/badge.svg)](https://github.com/cvhariharan/done/actions/workflows/main.yml)
+
 A minimal CI.
 
 Runs the jobs inside docker containers.
