@@ -120,12 +120,6 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 		}
 	}
 
-	if err := d.createSrcDirectories(cli); err != nil {
-		return fmt.Errorf("unable to create source directories for %s: %v", d.name, err)
-	}
-
-	mounts := d.prepareMounts()
-
 	commandScript := strings.Join(d.cmd, "\n")
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image:      d.image,
@@ -133,13 +127,17 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 		Cmd:        []string{"/bin/sh", "-c", commandScript},
 		WorkingDir: WORKING_DIR,
 	}, &container.HostConfig{
-		Mounts: mounts,
+		Mounts: d.prepareMounts(),
 	}, nil, nil, d.name)
 	if err != nil {
 		return fmt.Errorf("unable to create container %s: %v", d.name, err)
 	}
 	d.containerID = resp.ID
 	defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+
+	if err := d.createSrcDirectories(ctx, cli); err != nil {
+		return fmt.Errorf("unable to create source directories for %s: %v", d.name, err)
+	}
 
 	if err := d.artifactManager.RetrieveArtifact(d.containerID, nil); err != nil {
 		return fmt.Errorf("unable to retrieve artifacts for %s: %v", d.name, err)
@@ -181,8 +179,24 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 	return nil
 }
 
-func (d *DockerRunner) createSrcDirectories(cli *client.Client) error {
-	return utils.TarCopy(d.src, filepath.Join(BUILD_DIR, fmt.Sprintf("src-%s", d.name)), "")
+func (d *DockerRunner) createSrcDirectories(ctx context.Context, cli *client.Client) error {
+	f, err := os.CreateTemp("", "tarcopy-*.tar")
+	if err != nil {
+		return err
+	}
+	f.Close()
+	defer os.Remove(f.Name())
+
+	if err := utils.CompressTar(d.src, f.Name()); err != nil {
+		return err
+	}
+
+	tar, err := os.Open(f.Name())
+	if err != nil {
+		return nil
+	}
+
+	return cli.CopyToContainer(ctx, d.containerID, WORKING_DIR, tar, types.CopyToContainerOptions{})
 }
 
 func (d *DockerRunner) publishArtifacts() error {
@@ -195,14 +209,7 @@ func (d *DockerRunner) publishArtifacts() error {
 }
 
 func (d *DockerRunner) prepareMounts() []mount.Mount {
-	mounts := []mount.Mount{
-		{
-			Type:   mount.TypeBind,
-			Source: filepath.Join(d.workingDirectory, BUILD_DIR, fmt.Sprintf("src-%s", d.name)),
-			Target: WORKING_DIR,
-		},
-	}
-
+	var mounts []mount.Mount
 	if d.dockerOptions.MountDockerSocket {
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,

@@ -95,6 +95,42 @@ func Decompress(tarPath, baseDir string) error {
 	}
 }
 
+// CompressTar takes a path to a file or directory and creates a .tar file
+// at the outputPath location
+func CompressTar(path, outputPath string) error {
+	tarFile, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("could not create tar.gzip file %s: %v", outputPath, err)
+	}
+	defer tarFile.Close()
+
+	tw := tar.NewWriter(tarFile)
+	defer tw.Close()
+
+	return filepath.Walk(path, func(path string, info fs.FileInfo, err error) error {
+		header, err := tar.FileInfoHeader(info, path)
+		if err != nil {
+			return fmt.Errorf("could not create tar.gzip file %s: %v", path, err)
+		}
+		header.Name = filepath.ToSlash(path)
+		if err := tw.WriteHeader(header); err != nil {
+			return fmt.Errorf("could not create tar.gzip file %s: %v", path, err)
+		}
+
+		if !info.IsDir() {
+			data, err := os.Open(path)
+			if err != nil {
+				return fmt.Errorf("could not open file %s: %v", path, err)
+			}
+			if _, err := io.Copy(tw, data); err != nil {
+				return fmt.Errorf("could not copy tar.gzip contents for file %s: %v", path, err)
+			}
+			data.Close()
+		}
+		return nil
+	})
+}
+
 // DecompressTar takes a location to a .tar file and a base path and
 // decompresses the contents wrt the base path
 func DecompressTar(tarPath, baseDir string) error {
