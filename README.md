@@ -5,6 +5,17 @@ A minimal CI.
 
 Runs the jobs inside docker containers.
 
+## Building Done with Done
+```bash
+go run cmd/done/main.go -m
+```
+This should create an artifact tar file in the `.artifacts` directory with the linux binary for `done`.
+
+`-m` flag gives access to the host's docker socket. This is required only if containers are created within `done`.
+<p align="center">
+    <img src="https://media.tenor.com/rKLBka9zl5UAAAAd/yeah-excellent.gif" width="40%" height="40%">
+<p>
+
 ## Example
 The job file is inspired from GitLab CI.
 
@@ -34,3 +45,4 @@ jobs:
       - echo "Testing"
       - echo "Testing successful"
 ```
+

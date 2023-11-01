@@ -1,0 +1,19 @@
+stages:
+  - test
+  - build
+
+jobs:
+  - name: Validate
+    stage: test
+    image: "docker.io/golang:1.21.3"
+    script:
+      - go test ./...
+
+  - name: Build job
+    stage: build
+    image: "docker.io/golang:1.21.3"
+    script:
+      - go build -o done cmd/done/main.go
+    artifacts:
+      - done
+
