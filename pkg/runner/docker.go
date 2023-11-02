@@ -16,8 +16,8 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
-	"github.com/google/uuid"
 	"github.com/gosimple/slug"
+	"github.com/rs/xid"
 )
 
 const (
@@ -51,7 +51,7 @@ func NewDockerRunner(name string, artifactManager artifacts.ArtifactManager, doc
 	if err != nil {
 		log.Fatal(err)
 	}
-	jobName := slug.Make(name + uuid.NewString())
+	jobName := slug.Make(fmt.Sprintf("%s-%s", name, xid.New().String()))
 
 	if dockerOptions.Stdout == nil {
 		dockerOptions.Stdout = os.Stdout
