@@ -10,6 +10,7 @@ import (
 	"github.com/cvhariharan/done/pkg/artifacts"
 	"github.com/cvhariharan/done/pkg/models"
 	"github.com/cvhariharan/done/pkg/runner"
+	"github.com/cvhariharan/done/pkg/utils"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
@@ -68,7 +69,12 @@ func main() {
 
 			func(job models.Job) {
 				eg.Go(func() error {
-					return runner.NewDockerRunner(job.Name, dockerArtifactManager, runner.DockerRunnerOptions{ShowImagePull: true, Stdout: os.Stdout, Stderr: os.Stderr, MountDockerSocket: mountDockerSocket}).
+					return runner.NewDockerRunner(job.Name, dockerArtifactManager,
+						runner.DockerRunnerOptions{
+							ShowImagePull:     true,
+							Stdout:            utils.NewColorLogger(job.Name, os.Stdout, true),
+							Stderr:            utils.NewColorLogger(job.Name, os.Stderr, false),
+							MountDockerSocket: mountDockerSocket}).
 						WithImage(job.Image).
 						WithSrc(job.Src).
 						WithCmd(job.Script).

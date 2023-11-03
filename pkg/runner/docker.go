@@ -16,6 +16,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gosimple/slug"
 	"github.com/rs/xid"
 )
@@ -114,17 +115,19 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to pull image to create container %s: %v", d.name, err)
 	}
 	defer reader.Close()
+	imageLogs := io.Discard
 	if d.dockerOptions.ShowImagePull {
-		if _, err := io.Copy(d.dockerOptions.Stdout, reader); err != nil {
-			return fmt.Errorf("unable to read image pull logs for %s: %v", d.name, err)
-		}
+		imageLogs = d.dockerOptions.Stdout
+	}
+	if _, err := io.Copy(imageLogs, reader); err != nil {
+		return fmt.Errorf("unable to read image pull logs for %s: %v", d.name, err)
 	}
 
 	commandScript := strings.Join(d.cmd, "\n")
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image:      d.image,
 		Env:        d.env,
-		Cmd:        []string{"/bin/sh", "-c", commandScript},
+		Cmd:        []string{"/bin/sh", "-c", commandScript, ">/dev/null 2>&1"},
 		WorkingDir: WORKING_DIR,
 	}, &container.HostConfig{
 		Mounts: d.prepareMounts(),
@@ -157,7 +160,7 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 	}
 	defer logs.Close()
 
-	if _, err := io.Copy(d.dockerOptions.Stdout, logs); err != nil {
+	if _, err := stdcopy.StdCopy(d.dockerOptions.Stdout, d.dockerOptions.Stderr, logs); err != nil {
 		return fmt.Errorf("unable to read container logs from %s: %v", d.name, err)
 	}
 
