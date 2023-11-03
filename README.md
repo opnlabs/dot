@@ -7,7 +7,7 @@ Runs the jobs inside docker containers.
 
 ## Building Done with Done
 ```bash
-go run cmd/done/main.go -m
+go run main.go -m
 ```
 This should create an artifact tar file in the `.artifacts` directory with the linux binary for `done`.
 

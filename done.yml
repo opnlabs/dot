@@ -13,7 +13,7 @@ jobs:
     stage: build
     image: "docker.io/golang:1.21.3"
     script:
-      - go build -o done cmd/done/main.go
+      - go build -o done main.go
     artifacts:
       - done
 

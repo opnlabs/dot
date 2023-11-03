@@ -1,10 +1,10 @@
-package main
+package done
 
 import (
 	"context"
-	"flag"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cvhariharan/done/pkg/artifacts"
@@ -12,24 +12,61 @@ import (
 	"github.com/cvhariharan/done/pkg/runner"
 	"github.com/cvhariharan/done/pkg/utils"
 	"github.com/go-playground/validator/v10"
+	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
 )
 
-var validate *validator.Validate
+var (
+	jobFilePath          string
+	mountDockerSocket    bool
+	envVars              []string
+	environmentVariables []models.Variable   = make([]models.Variable, 0)
+	validate             *validator.Validate = validator.New(validator.WithRequiredStructEnabled())
+)
 
-func main() {
+var rootCmd = &cobra.Command{
+	Use:   "done",
+	Short: "Done is a minimal CI",
+	Long: `Done is a minimal CI that runs jobs defined in a file ( default done.yml )
+inside docker containers. Jobs can be divided into stages where jobs within a stage are executed
+concurrently.`,
+
+	Run: func(cmd *cobra.Command, args []string) {
+
+		if len(envVars) > 0 {
+			for _, v := range envVars {
+				variables := strings.Split(v, "=")
+				if len(variables) != 2 {
+					log.Fatalf("variables should be defined as KEY=VALUE: %s", v)
+				}
+
+				m := make(map[string]string)
+				m[variables[0]] = variables[1]
+				environmentVariables = append(environmentVariables, m)
+			}
+		}
+
+		run()
+	},
+}
+
+func init() {
+	rootCmd.Flags().StringVarP(&jobFilePath, "job-file-path", "f", "done.yml", "Path to the job file.")
+	rootCmd.Flags().BoolVarP(&mountDockerSocket, "mount-docker-socket", "m", false, "Mount docker socket. Required to run containers from done.")
+
+	rootCmd.Flags().StringArrayVarP(&envVars, "environment-variable", "e", make([]string, 0), "Environment variables. KEY=VALUE")
+
+}
+
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() {
 	ctx := context.Background()
-
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-
-	var jobFilePath string
-	flag.StringVar(&jobFilePath, "f", "done.yml", "Job File Path")
-
-	var mountDockerSocket bool
-	flag.BoolVar(&mountDockerSocket, "m", false, "Mount docker socket")
-	flag.Parse()
-
 	contents, err := os.ReadFile(jobFilePath)
 	if err != nil {
 		log.Fatal(err)
@@ -41,7 +78,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	validate = validator.New(validator.WithRequiredStructEnabled())
 	err = validate.Struct(jobFile)
 	if err != nil {
 		log.Fatalf("Err(s):\n%+v\n", err)
@@ -78,7 +114,7 @@ func main() {
 						WithImage(job.Image).
 						WithSrc(job.Src).
 						WithCmd(job.Script).
-						WithEnv(job.Variables).
+						WithEnv(append(job.Variables, environmentVariables...)).
 						CreatesArtifacts(job.Artifacts).Run(jobCtx)
 				})
 			}(job)
