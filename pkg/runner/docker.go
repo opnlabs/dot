@@ -145,7 +145,11 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to create container %s: %v", d.name, err)
 	}
 	d.containerID = resp.ID
-	defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+	defer func() {
+		if rErr := cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{}); rErr != nil {
+			err = rErr
+		}
+	}()
 
 	if err := d.createSrcDirectories(ctx, cli); err != nil {
 		return fmt.Errorf("unable to create source directories for %s: %v", d.name, err)
@@ -179,10 +183,10 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 		return fmt.Errorf("error waiting for container %s to stop: %v", d.name, err)
 	case status := <-statusCh:
 		if status.StatusCode != 0 {
-			return fmt.Errorf("container exited with status code %d", status.StatusCode)
+			return fmt.Errorf("container %s exited with status code %d", d.name, status.StatusCode)
 		}
 		if err := d.publishArtifacts(); err != nil {
-			return fmt.Errorf("unable to publish artifacts fpr %s: %v", d.name, err)
+			return fmt.Errorf("unable to publish artifacts for %s: %v", d.name, err)
 		}
 	case <-ctx.Done():
 		return fmt.Errorf("context timed out, stopping container %s", d.name)
@@ -196,7 +200,9 @@ func (d *DockerRunner) createSrcDirectories(ctx context.Context, cli *client.Cli
 	if err != nil {
 		return err
 	}
-	f.Close()
+	if err := f.Close(); err != nil {
+		return err
+	}
 	defer os.Remove(f.Name())
 
 	if err := utils.CompressTar(d.src, f.Name()); err != nil {

@@ -37,9 +37,14 @@ type DockerArtifactsManager struct {
 func NewDockerArtifactsManager(artifactsDir string) ArtifactManager {
 	// Clear previous artifacts and create a new directory
 	if _, err := os.Stat(artifactsDir); err == nil {
-		os.RemoveAll(artifactsDir)
+		if err := os.RemoveAll(artifactsDir); err != nil {
+			log.Fatalf("could not remove %s directory: %v", artifactsDir, err)
+		}
 	}
-	os.Mkdir(artifactsDir, 0755)
+
+	if err := os.Mkdir(artifactsDir, 0755); err != nil {
+		log.Fatalf("could not create %s directory: %v", artifactsDir, err)
+	}
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -82,7 +87,7 @@ func (d *DockerArtifactsManager) RetrieveArtifact(jobID string, keys []string) e
 			if err != nil {
 				return fmt.Errorf("could not find original path for artifact %s: %v", v, err)
 			}
-			f, err := os.Open(v)
+			f, err := os.Open(filepath.Clean(v))
 			if err != nil {
 				return fmt.Errorf("could not open artifact %s: %v", v, err)
 			}
@@ -95,6 +100,10 @@ func (d *DockerArtifactsManager) RetrieveArtifact(jobID string, keys []string) e
 	}
 
 	return filepath.Walk(d.artifactsDir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if !strings.Contains(path, ".tar") {
 			return nil
 		}

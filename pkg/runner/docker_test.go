@@ -187,8 +187,8 @@ func testArtifactCreation(t *testing.T, b *bytes.Buffer) bool {
 	return false
 }
 
-func testTimeoutOutput(t *testing.T, b *bytes.Buffer) bool {
-	str := b.String()
-	str = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(str, "")
-	return (strings.Compare(strings.TrimSpace(str), "context timed out") == 0)
-}
+// func testTimeoutOutput(t *testing.T, b *bytes.Buffer) bool {
+// 	str := b.String()
+// 	str = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(str, "")
+// 	return (strings.Compare(strings.TrimSpace(str), "context timed out") == 0)
+// }

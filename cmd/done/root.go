@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -71,7 +72,7 @@ func Execute() {
 
 func run() {
 	ctx := context.Background()
-	contents, err := os.ReadFile(jobFilePath)
+	contents, err := os.ReadFile(filepath.Clean(jobFilePath))
 	if err != nil {
 		log.Fatal(err)
 	}

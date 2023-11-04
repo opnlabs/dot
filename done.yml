@@ -1,15 +1,22 @@
 stages:
   - test
+  - security
   - build
 
 jobs:
-  - name: Validate
+  - name: Run tests
     stage: test
     image: "docker.io/golang:1.21.3"
     script:
       - go test ./...
 
-  - name: Build job
+  - name: Run checks
+    stage: security
+    image: "docker.io/golangci/golangci-lint:latest"
+    script:
+      - golangci-lint run ./...
+
+  - name: Build job linux
     stage: build
     image: "docker.io/golang:1.21.3"
     script:
