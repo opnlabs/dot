@@ -2,6 +2,8 @@ package runner
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -15,6 +17,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gosimple/slug"
@@ -45,6 +48,7 @@ type DockerRunner struct {
 	artifacts        []string
 	artifactManager  artifacts.ArtifactManager
 	dockerOptions    DockerRunnerOptions
+	authConfig       string
 }
 
 func NewDockerRunner(name string, artifactManager artifacts.ArtifactManager, dockerOptions DockerRunnerOptions) *DockerRunner {
@@ -98,6 +102,20 @@ func (d *DockerRunner) WithCmd(cmd []string) *DockerRunner {
 	return d
 }
 
+func (d *DockerRunner) WithCredentials(username, password string) *DockerRunner {
+	authConfig := registry.AuthConfig{
+		Username: username,
+		Password: password,
+	}
+
+	jsonVal, err := json.Marshal(authConfig)
+	if err != nil {
+		log.Fatal("could not create auth config for docker authentication: ", err)
+	}
+	d.authConfig = base64.URLEncoding.EncodeToString(jsonVal)
+	return d
+}
+
 func (d *DockerRunner) CreatesArtifacts(artifacts []string) *DockerRunner {
 	d.artifacts = artifacts
 	return d
@@ -110,17 +128,8 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 	}
 	defer cli.Close()
 
-	reader, err := cli.ImagePull(ctx, d.image, types.ImagePullOptions{})
-	if err != nil {
-		return fmt.Errorf("unable to pull image to create container %s: %v", d.name, err)
-	}
-	defer reader.Close()
-	imageLogs := io.Discard
-	if d.dockerOptions.ShowImagePull {
-		imageLogs = d.dockerOptions.Stdout
-	}
-	if _, err := io.Copy(imageLogs, reader); err != nil {
-		return fmt.Errorf("unable to read image pull logs for %s: %v", d.name, err)
+	if err := d.pullImage(ctx, cli); err != nil {
+		return fmt.Errorf("could not pull image for container %s: %v", d.name, err)
 	}
 
 	commandScript := strings.Join(d.cmd, "\n")
@@ -221,4 +230,22 @@ func (d *DockerRunner) prepareMounts() []mount.Mount {
 		})
 	}
 	return mounts
+}
+
+func (d *DockerRunner) pullImage(ctx context.Context, cli *client.Client) error {
+	reader, err := cli.ImagePull(ctx, d.image, types.ImagePullOptions{RegistryAuth: d.authConfig})
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	imageLogs := io.Discard
+	if d.dockerOptions.ShowImagePull {
+		imageLogs = d.dockerOptions.Stdout
+	}
+	if _, err := io.Copy(imageLogs, reader); err != nil {
+		return err
+	}
+
+	return nil
 }

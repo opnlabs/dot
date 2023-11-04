@@ -21,7 +21,9 @@ var (
 	jobFilePath          string
 	mountDockerSocket    bool
 	envVars              []string
-	environmentVariables []models.Variable   = make([]models.Variable, 0)
+	environmentVariables []models.Variable = make([]models.Variable, 0)
+	username             string
+	password             string
 	validate             *validator.Validate = validator.New(validator.WithRequiredStructEnabled())
 )
 
@@ -54,6 +56,8 @@ concurrently.`,
 func init() {
 	rootCmd.Flags().StringVarP(&jobFilePath, "job-file-path", "f", "done.yml", "Path to the job file.")
 	rootCmd.Flags().BoolVarP(&mountDockerSocket, "mount-docker-socket", "m", false, "Mount docker socket. Required to run containers from done.")
+	rootCmd.Flags().StringVarP(&username, "registry-username", "u", "", "Username for the container registry")
+	rootCmd.Flags().StringVarP(&password, "registry-password", "p", "", "Password / Token for the container registry")
 
 	rootCmd.Flags().StringArrayVarP(&envVars, "environment-variable", "e", make([]string, 0), "Environment variables. KEY=VALUE")
 
@@ -115,6 +119,7 @@ func run() {
 						WithSrc(job.Src).
 						WithCmd(job.Script).
 						WithEnv(append(job.Variables, environmentVariables...)).
+						WithCredentials(username, password).
 						CreatesArtifacts(job.Artifacts).Run(jobCtx)
 				})
 			}(job)
