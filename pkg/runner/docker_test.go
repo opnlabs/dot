@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cvhariharan/done/pkg/artifacts"
-	"github.com/cvhariharan/done/pkg/models"
-	"github.com/cvhariharan/done/pkg/utils"
+	"github.com/cvhariharan/dot/pkg/artifacts"
+	"github.com/cvhariharan/dot/pkg/models"
+	"github.com/cvhariharan/dot/pkg/utils"
 )
 
 type Test struct {
@@ -36,7 +36,6 @@ func teardown(tb testing.TB) {
 		log.Println(err)
 		return
 	}
-	os.RemoveAll(filepath.Join(wd, ".done"))
 	os.RemoveAll(filepath.Join(wd, ".artifacts"))
 }
 

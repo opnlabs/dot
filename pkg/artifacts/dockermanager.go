@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cvhariharan/done/pkg/store"
+	"github.com/cvhariharan/dot/pkg/store"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 )

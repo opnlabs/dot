@@ -1,4 +1,4 @@
-package done
+package dot
 
 import (
 	"fmt"

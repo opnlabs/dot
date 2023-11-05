@@ -2,7 +2,7 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - binary: done-ci
+  - binary: dot
     env:
       - CGO_ENABLED=0
     goos:
@@ -13,7 +13,7 @@ builds:
     flags:
       - -buildvcs=false
     ldflags:
-      - "-s -w -X 'github.com/cvhariharan/done/cmd/done.version={{ .Version }}' -X 'github.com/cvhariharan/done/cmd/done.builddate={{ .Date }}' -X 'github.com/cvhariharan/done/cmd/done.commit={{ .Commit }}'"
+      - "-s -w -X 'github.com/cvhariharan/dot/cmd/dot.version={{ .Version }}' -X 'github.com/cvhariharan/dot/cmd/dot.builddate={{ .Date }}' -X 'github.com/cvhariharan/dot/cmd/dot.commit={{ .Commit }}'"
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 checksum:

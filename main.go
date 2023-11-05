@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/cvhariharan/done/cmd/done"
+	"github.com/cvhariharan/dot/cmd/dot"
 )
 
 func main() {
-	done.Execute()
+	dot.Execute()
 }

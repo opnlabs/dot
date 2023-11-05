@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cvhariharan/done/pkg/artifacts"
-	"github.com/cvhariharan/done/pkg/models"
-	"github.com/cvhariharan/done/pkg/utils"
+	"github.com/cvhariharan/dot/pkg/artifacts"
+	"github.com/cvhariharan/dot/pkg/models"
+	"github.com/cvhariharan/dot/pkg/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -25,7 +25,6 @@ import (
 )
 
 const (
-	BUILD_DIR     = ".done"
 	ARTIFACTS_DIR = ".artifacts"
 	WORKING_DIR   = "/app"
 )

@@ -1,4 +1,4 @@
-name: Done
+name: Dot Build
 
 on:
   push:
@@ -26,6 +26,6 @@ jobs:
       with:
         go-version: '1.21.1'
 
-    - name: Run Done
+    - name: Run Dot
       run: go run main.go -m
 

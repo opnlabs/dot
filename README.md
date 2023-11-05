@@ -1,9 +1,9 @@
-# Done
-[![Done](https://github.com/cvhariharan/done/actions/workflows/main.yml/badge.svg)](https://github.com/cvhariharan/done/actions/workflows/main.yml)
+# Dot
+[![Dot](https://github.com/cvhariharan/dot/actions/workflows/main.yml/badge.svg)](https://github.com/cvhariharan/dot/actions/workflows/main.yml)
 
 A minimal CI. Designed to be local first.
 
-All the jobs run inside docker containers. `Done` communicates with the Docker daemon using the [Docker client API](https://pkg.go.dev/github.com/docker/docker/client#section-readme).
+All the jobs run inside docker containers. `Dot` communicates with the Docker daemon using the [Docker client API](https://pkg.go.dev/github.com/docker/docker/client#section-readme).
 
 <p align="center">
     <img src="images/demo.gif" width="800">
@@ -17,7 +17,7 @@ All the jobs run inside docker containers. `Done` communicates with the Docker d
 - Uses plain Docker
 
 ## Installation
-Get the latest version from the [releases](https://github.com/cvhariharan/done/releases) section.
+Get the latest version from the [releases](https://github.com/cvhariharan/dot/releases) section.
 
 ## Example
 This example uses [GoReleaser](https://github.com/goreleaser/goreleaser) to build this project.
@@ -52,16 +52,16 @@ jobs:
 Extract the binary once the build is complete.
 ```
 tar xvf .artifacts/artifacts-*.tar
-dist/done_linux_amd64_v1/done-ci version
+dist/dot_linux_amd64_v1/dot version
 ```
-### Build Done with Done
-This project can be built with `Done`. The [done.yml](done.yml) file describes all the jobs necessary to build a linux binary. Clone the repo and run
+### Build Dot with Dot
+This project can be built with `Dot`. The [dot.yml](dot.yml) file describes all the jobs necessary to build a linux binary. Clone the repo and run
 
 ```bash
 go run main.go -m
 ```
-This should create an artifact tar file in the `.artifacts` directory with the linux binary `done-ci`.
-The `-m` flag gives `done-ci` access to the host's docker socket. This is required only if containers are created within `done-ci`.
+This should create an artifact tar file in the `.artifacts` directory with the linux binary `dot`.
+The `-m` flag gives `dot` access to the host's docker socket. This is required only if containers are created within `dot`.
 <p align="center">
     <img src="https://media.tenor.com/rKLBka9zl5UAAAAd/yeah-excellent.gif" width="40%" height="40%">
 <p>

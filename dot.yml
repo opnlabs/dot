@@ -24,6 +24,7 @@ jobs:
   #     - curl -sfL https://goreleaser.com/static/run | bash -s -- build --snapshot
   #   artifacts:
   #     - dist
+  
   - name: Build job linux
     stage: build
     image: "docker.io/golang:1.21.3-bookworm"
@@ -34,11 +35,11 @@ jobs:
       - export COMMIT=$(git log --format="%H" -n 1)
       - echo $BUILDDATE
       - |
-        go build -o done-ci \
-        -ldflags="-X 'github.com/cvhariharan/done/cmd/done.version=$VERSION' \
-        -X 'github.com/cvhariharan/done/cmd/done.builddate=$BUILDDATE' \
-        -X 'github.com/cvhariharan/done/cmd/done.commit=$COMMIT'" \
+        go build -o dot \
+        -ldflags="-X 'github.com/cvhariharan/dot/cmd/dot.version=$VERSION' \
+        -X 'github.com/cvhariharan/dot/cmd/dot.builddate=$BUILDDATE' \
+        -X 'github.com/cvhariharan/dot/cmd/dot.commit=$COMMIT'" \
         main.go
     artifacts:
-      - done-ci
+      - dot
 

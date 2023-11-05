@@ -1,4 +1,4 @@
-package done
+package dot
 
 import (
 	"context"
@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cvhariharan/done/pkg/artifacts"
-	"github.com/cvhariharan/done/pkg/models"
-	"github.com/cvhariharan/done/pkg/runner"
-	"github.com/cvhariharan/done/pkg/utils"
+	"github.com/cvhariharan/dot/pkg/artifacts"
+	"github.com/cvhariharan/dot/pkg/models"
+	"github.com/cvhariharan/dot/pkg/runner"
+	"github.com/cvhariharan/dot/pkg/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
@@ -29,9 +29,9 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "done-ci",
-	Short: "Done is a minimal CI",
-	Long: `Done is a minimal CI that runs jobs defined in a file ( default done.yml )
+	Use:   "dot",
+	Short: "Dot is a minimal CI",
+	Long: `Dot is a minimal CI that runs jobs defined in a file ( default dot.yml )
 inside docker containers. Jobs can be divided into stages where jobs within a stage are executed
 concurrently.`,
 
@@ -55,7 +55,7 @@ concurrently.`,
 }
 
 func init() {
-	rootCmd.Flags().StringVarP(&jobFilePath, "job-file-path", "f", "done.yml", "Path to the job file.")
+	rootCmd.Flags().StringVarP(&jobFilePath, "job-file-path", "f", "dot.yml", "Path to the job file.")
 	rootCmd.Flags().BoolVarP(&mountDockerSocket, "mount-docker-socket", "m", false, "Mount docker socket. Required to run containers from done.")
 	rootCmd.Flags().StringVarP(&username, "registry-username", "u", "", "Username for the container registry")
 	rootCmd.Flags().StringVarP(&password, "registry-password", "p", "", "Password / Token for the container registry")
