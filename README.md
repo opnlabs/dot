@@ -3,7 +3,7 @@
 
 A minimal CI. Designed to be local first.
 
-Runs the jobs inside docker containers. Done communicates with the Docker daemon using the [Docker client API](https://pkg.go.dev/github.com/docker/docker/client#section-readme).
+All the jobs run inside docker containers. `Done` communicates with the Docker daemon using the [Docker client API](https://pkg.go.dev/github.com/docker/docker/client#section-readme).
 
 <p align="center">
     <img src="images/demo.gif" width="800">
@@ -11,15 +11,16 @@ Runs the jobs inside docker containers. Done communicates with the Docker daemon
 
 ## Features
 - Single binary, can run anywhere, on your machine or CI/CD systems
-- Uses plain Docker, no custom engines / runtimes
-- Bring your own Docker images. Supports private registries
-- Simple yaml job definition
 - Multi stage builds with support for build artifacts
+- Simple yaml job definition
+- Bring your own Docker images. Supports private registries
+- Uses plain Docker
+
+## Installation
+Get the latest version from the [releases](https://github.com/cvhariharan/done/releases) section.
 
 ## Example
-This project can be built with Done. The [done.yml](done.yml) file describes all the jobs necessary to build a linux binary.
-
-This example uses [GoReleaser](https://github.com/goreleaser/goreleaser) to build the project.
+This example uses [GoReleaser](https://github.com/goreleaser/goreleaser) to build this project.
 ```yaml
 stages:
   - test
@@ -48,13 +49,13 @@ jobs:
     artifacts:
       - dist
 ```
-Extract the binary
+Extract the binary once the build is complete.
 ```
 tar xvf .artifacts/artifacts-*.tar
 dist/done_linux_amd64_v1/done-ci version
 ```
 ### Build Done with Done
-Clone the repo and run
+This project can be built with `Done`. The [done.yml](done.yml) file describes all the jobs necessary to build a linux binary. Clone the repo and run
 
 ```bash
 go run main.go -m
