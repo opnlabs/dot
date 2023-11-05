@@ -16,6 +16,14 @@ jobs:
     script:
       - golangci-lint run ./...
 
+  # - name: Build using Goreleaser
+  #   stage: build
+  #   image: "docker.io/golang:1.21.3-bookworm"
+  #   script:
+  #     - git config --global safe.directory '*'
+  #     - curl -sfL https://goreleaser.com/static/run | bash -s -- build --snapshot
+  #   artifacts:
+  #     - dist
   - name: Build job linux
     stage: build
     image: "docker.io/golang:1.21.3-bookworm"
