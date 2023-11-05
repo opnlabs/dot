@@ -18,9 +18,19 @@ jobs:
 
   - name: Build job linux
     stage: build
-    image: "docker.io/golang:1.21.3"
+    image: "docker.io/golang:1.21.3-bookworm"
     script:
-      - go build -o done main.go
+      - git config --global safe.directory '*'
+      - export VERSION=$(git describe --always)
+      - export BUILDDATE=$(date)
+      - export COMMIT=$(git log --format="%H" -n 1)
+      - echo $BUILDDATE
+      - |
+        go build -o done-ci \
+        -ldflags="-X 'github.com/cvhariharan/done/cmd/done.version=$VERSION' \
+        -X 'github.com/cvhariharan/done/cmd/done.builddate=$BUILDDATE' \
+        -X 'github.com/cvhariharan/done/cmd/done.commit=$COMMIT'" \
+        main.go
     artifacts:
-      - done
+      - done-ci
 

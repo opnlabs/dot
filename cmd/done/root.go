@@ -29,7 +29,7 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "done",
+	Use:   "done-ci",
 	Short: "Done is a minimal CI",
 	Long: `Done is a minimal CI that runs jobs defined in a file ( default done.yml )
 inside docker containers. Jobs can be divided into stages where jobs within a stage are executed
@@ -62,6 +62,7 @@ func init() {
 
 	rootCmd.Flags().StringArrayVarP(&envVars, "environment-variable", "e", make([]string, 0), "Environment variables. KEY=VALUE")
 
+	rootCmd.AddCommand(versionCmd)
 }
 
 func Execute() {
