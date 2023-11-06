@@ -1,5 +1,5 @@
 # Dot
-[![Dot](https://github.com/cvhariharan/dot/actions/workflows/main.yml/badge.svg)](https://github.com/cvhariharan/dot/actions/workflows/main.yml)
+[![Dot](https://github.com/cvhariharan/dot/actions/workflows/main.yml/badge.svg)](https://github.com/cvhariharan/dot/actions/workflows/main.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/cvhariharan/dot)](https://goreportcard.com/report/github.com/cvhariharan/dot)
 
 A minimal CI. Designed to be local first.
 
