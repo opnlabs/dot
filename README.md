@@ -19,6 +19,11 @@ All the jobs run inside docker containers. `Dot` communicates with the Docker da
 ## Installation
 Get the latest version from the [releases](https://github.com/cvhariharan/dot/releases) section.
 
+### Run using Docker
+```bash
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v /path/to/project:/app ghcr.io/cvhariharan/dot:latest -m
+```
+
 ## Example
 This example uses [GoReleaser](https://github.com/goreleaser/goreleaser) to build this project.
 ```yaml
