@@ -42,6 +42,7 @@ type DockerRunner struct {
 	src              string
 	env              []string
 	cmd              []string
+	entrypoint       []string
 	containerID      string
 	workingDirectory string
 	artifacts        []string
@@ -101,6 +102,11 @@ func (d *DockerRunner) WithCmd(cmd []string) *DockerRunner {
 	return d
 }
 
+func (d *DockerRunner) WithEntrypoint(entrypoint []string) *DockerRunner {
+	d.entrypoint = entrypoint
+	return d
+}
+
 func (d *DockerRunner) WithCredentials(username, password string) *DockerRunner {
 	authConfig := registry.AuthConfig{
 		Username: username,
@@ -131,19 +137,11 @@ func (d *DockerRunner) Run(ctx context.Context) error {
 		return fmt.Errorf("could not pull image for container %s: %v", d.name, err)
 	}
 
-	commandScript := strings.Join(d.cmd, "\n")
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image:      d.image,
-		Env:        d.env,
-		Cmd:        []string{"/bin/sh", "-c", commandScript, ">/dev/null 2>&1"},
-		WorkingDir: WORKING_DIR,
-	}, &container.HostConfig{
-		Mounts: d.prepareMounts(),
-	}, nil, nil, d.name)
+	resp, err := d.createContainer(ctx, cli)
+	d.containerID = resp.ID
 	if err != nil {
 		return fmt.Errorf("unable to create container %s: %v", d.name, err)
 	}
-	d.containerID = resp.ID
 	defer func() {
 		if rErr := cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{}); rErr != nil {
 			err = rErr
@@ -253,4 +251,26 @@ func (d *DockerRunner) pullImage(ctx context.Context, cli *client.Client) error 
 	}
 
 	return nil
+}
+
+func (d *DockerRunner) createContainer(ctx context.Context, cli *client.Client) (container.CreateResponse, error) {
+	commandScript := strings.Join(d.cmd, "\n")
+	cmd := []string{"/bin/sh", "-c", commandScript}
+	if len(d.entrypoint) > 0 {
+		cmd = []string{commandScript}
+	}
+
+	resp, err := cli.ContainerCreate(ctx, &container.Config{
+		Image:      d.image,
+		Env:        d.env,
+		Entrypoint: d.entrypoint,
+		Cmd:        cmd,
+		WorkingDir: WORKING_DIR,
+	}, &container.HostConfig{
+		Mounts: d.prepareMounts(),
+	}, nil, nil, d.name)
+	if err != nil {
+		return container.CreateResponse{}, err
+	}
+	return resp, nil
 }

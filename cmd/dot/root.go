@@ -120,6 +120,7 @@ func run() {
 						WithImage(job.Image).
 						WithSrc(job.Src).
 						WithCmd(job.Script).
+						WithEntrypoint(job.Entrypoint).
 						WithEnv(append(job.Variables, environmentVariables...)).
 						WithCredentials(username, password).
 						CreatesArtifacts(job.Artifacts).Run(jobCtx)

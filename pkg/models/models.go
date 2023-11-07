@@ -9,11 +9,12 @@ type JobFile struct {
 }
 
 type Job struct {
-	Name      string     `yaml:"name" validate:"required"`
-	Src       string     `yaml:"src"`
-	Stage     Stage      `yaml:"stage" validate:"required"`
-	Variables []Variable `yaml:"variables"`
-	Image     string     `yaml:"image" validate:"required"`
-	Script    []string   `yaml:"script"`
-	Artifacts []string   `yaml:"artifacts"`
+	Name       string     `yaml:"name" validate:"required"`
+	Src        string     `yaml:"src"`
+	Stage      Stage      `yaml:"stage" validate:"required"`
+	Variables  []Variable `yaml:"variables"`
+	Image      string     `yaml:"image" validate:"required"`
+	Script     []string   `yaml:"script"`
+	Entrypoint []string   `yaml:"entrypoint"`
+	Artifacts  []string   `yaml:"artifacts"`
 }
