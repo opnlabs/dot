@@ -62,11 +62,12 @@ func NewDockerRunner(name string, artifactManager artifacts.ArtifactManager, doc
 		dockerOptions.Stdout = os.Stdout
 	}
 	if dockerOptions.Stderr == nil {
-		dockerOptions.Stdout = os.Stderr
+		dockerOptions.Stderr = os.Stderr
 	}
 
 	return &DockerRunner{
 		name:             jobName,
+		src:              filepath.Clean(""),
 		workingDirectory: wd,
 		artifactManager:  artifactManager,
 		dockerOptions:    dockerOptions,
