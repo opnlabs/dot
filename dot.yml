@@ -16,6 +16,13 @@ jobs:
     script:
       - golangci-lint run ./...
 
+  # - name: Run GoSec
+  #   stage: security
+  #   image: "docker.io/securego/gosec:latest"
+  #   entrypoint: ["/bin/sh", "-c"]
+  #   script:
+  #     - gosec --help
+
   # - name: Build using Goreleaser
   #   stage: build
   #   image: "docker.io/golang:1.21.3-bookworm"
@@ -36,9 +43,9 @@ jobs:
       - echo $BUILDDATE
       - |
         go build -o dot \
-        -ldflags="-X 'github.com/cvhariharan/dot/cmd/dot.version=$VERSION' \
-        -X 'github.com/cvhariharan/dot/cmd/dot.builddate=$BUILDDATE' \
-        -X 'github.com/cvhariharan/dot/cmd/dot.commit=$COMMIT'" \
+        -ldflags="-X 'github.com/opnlabs/dot/cmd/dot.version=$VERSION' \
+        -X 'github.com/opnlabs/dot/cmd/dot.builddate=$BUILDDATE' \
+        -X 'github.com/opnlabs/dot/cmd/dot.commit=$COMMIT'" \
         main.go
     artifacts:
       - dot

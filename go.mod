@@ -1,4 +1,4 @@
-module github.com/cvhariharan/dot
+module github.com/opnlabs/dot
 
 go 1.21.3
 

@@ -11,9 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cvhariharan/dot/pkg/artifacts"
-	"github.com/cvhariharan/dot/pkg/models"
-	"github.com/cvhariharan/dot/pkg/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -21,6 +18,9 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gosimple/slug"
+	"github.com/opnlabs/dot/pkg/artifacts"
+	"github.com/opnlabs/dot/pkg/models"
+	"github.com/opnlabs/dot/pkg/utils"
 	"github.com/rs/xid"
 )
 

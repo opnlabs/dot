@@ -13,7 +13,7 @@ builds:
     flags:
       - -buildvcs=false
     ldflags:
-      - "-s -w -X 'github.com/cvhariharan/dot/cmd/dot.version={{ .Version }}' -X 'github.com/cvhariharan/dot/cmd/dot.builddate={{ .Date }}' -X 'github.com/cvhariharan/dot/cmd/dot.commit={{ .Commit }}'"
+      - "-s -w -X 'github.com/opnlabs/dot/cmd/dot.version={{ .Version }}' -X 'github.com/opnlabs/dot/cmd/dot.builddate={{ .Date }}' -X 'github.com/opnlabs/dot/cmd/dot.commit={{ .Commit }}'"
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 checksum:

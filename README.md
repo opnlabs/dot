@@ -1,5 +1,5 @@
 # Dot
-[![Dot](https://github.com/cvhariharan/dot/actions/workflows/main.yml/badge.svg)](https://github.com/cvhariharan/dot/actions/workflows/main.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/cvhariharan/dot)](https://goreportcard.com/report/github.com/cvhariharan/dot)
+[![Dot](https://github.com/opnlabs/dot/actions/workflows/main.yml/badge.svg)](https://github.com/opnlabs/dot/actions/workflows/main.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/cvhariharan/dot)](https://goreportcard.com/report/github.com/cvhariharan/dot)
 
 A minimal CI. Designed to be local first.
 
@@ -17,11 +17,11 @@ All the jobs run inside docker containers. `Dot` communicates with the Docker da
 - Uses plain Docker
 
 ## Installation
-Get the latest version from the [releases](https://github.com/cvhariharan/dot/releases) section.
+Get the latest version from the [releases](https://github.com/opnlabs/dot/releases) section.
 
 ### Run using Docker
 ```bash
-docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v /path/to/project:/app ghcr.io/cvhariharan/dot:latest -m
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v /path/to/project:/app ghcr.io/opnlabs/dot:latest -m
 ```
 
 ## Example

@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cvhariharan/dot/pkg/artifacts"
-	"github.com/cvhariharan/dot/pkg/models"
-	"github.com/cvhariharan/dot/pkg/utils"
+	"github.com/opnlabs/dot/pkg/artifacts"
+	"github.com/opnlabs/dot/pkg/models"
+	"github.com/opnlabs/dot/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
