@@ -5,6 +5,8 @@ A minimal CI. Designed to be local first.
 
 All the jobs run inside docker containers. `Dot` communicates with the Docker daemon using the [Docker client API](https://pkg.go.dev/github.com/docker/docker/client#section-readme).
 
+Refer the project [wiki](https://github.com/opnlabs/dot/wiki) to learn more about dot.
+
 <p align="center">
     <img src="images/demo.gif" width="800">
 <p>
