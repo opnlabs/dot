@@ -91,7 +91,7 @@ func (d *DockerRunner) WithEnv(env []models.Variable) *DockerRunner {
 			log.Fatal("variables should be defined as a key value pair")
 		}
 		for k, v := range v {
-			variables = append(variables, fmt.Sprintf("%s=%s", k, v))
+			variables = append(variables, fmt.Sprintf("%s=%s", k, fmt.Sprint(v)))
 		}
 	}
 	d.env = variables

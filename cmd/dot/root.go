@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/expr-lang/expr"
 	"github.com/go-playground/validator/v10"
 	"github.com/opnlabs/dot/pkg/artifacts"
 	"github.com/opnlabs/dot/pkg/models"
@@ -44,7 +45,7 @@ concurrently.`,
 					log.Fatalf("variables should be defined as KEY=VALUE: %s", v)
 				}
 
-				m := make(map[string]string)
+				m := make(map[string]any)
 				m[variables[0]] = variables[1]
 				environmentVariables = append(environmentVariables, m)
 			}
@@ -98,7 +99,36 @@ func run() {
 		if _, ok := stageMap[v.Stage]; !ok {
 			log.Fatalf("stage not defined: %s", v.Stage)
 		}
-		stageMap[v.Stage] = append(stageMap[v.Stage], v)
+
+		// Create expr program with the variables passed as env
+		if len(v.Condition) == 0 {
+			v.Condition = `true`
+		}
+
+		env := make(map[string]any)
+		for _, entries := range v.Variables {
+			if len(entries) > 1 {
+				log.Fatal("variables should be defined as a key value pair")
+			}
+			for k, value := range entries {
+				env[k] = value
+			}
+		}
+
+		p, err := expr.Compile(v.Condition, expr.Env(env), expr.AsBool())
+		if err != nil {
+			log.Fatalf("condition evaluation failed for job %s: %v", v.Name, err)
+		}
+		output, err := expr.Run(p, env)
+		if err != nil {
+			log.Fatalf("condition evaluation failed for job %s: %v", v.Name, err)
+		}
+
+		// Only append to stageMap if the condition evaluates to true
+		if output.(bool) {
+			stageMap[v.Stage] = append(stageMap[v.Stage], v)
+		}
+
 	}
 
 	dockerArtifactManager := artifacts.NewDockerArtifactsManager(".artifacts")

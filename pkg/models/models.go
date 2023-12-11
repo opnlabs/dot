@@ -1,7 +1,7 @@
 package models
 
 type Stage string
-type Variable map[string]string
+type Variable map[string]any
 
 type JobFile struct {
 	Stages []Stage `yaml:"stages" validate:"required,dive"`
@@ -17,4 +17,5 @@ type Job struct {
 	Script     []string   `yaml:"script"`
 	Entrypoint []string   `yaml:"entrypoint"`
 	Artifacts  []string   `yaml:"artifacts"`
+	Condition  string     `yaml:"condition"`
 }

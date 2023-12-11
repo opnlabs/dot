@@ -72,7 +72,7 @@ func TestRun(t *testing.T) {
 			Manager: manager,
 			Image:   "docker.io/alpine",
 			Variables: []models.Variable{
-				map[string]string{
+				map[string]any{
 					"TESTING_VARIABLE": "TESTING",
 				},
 			},

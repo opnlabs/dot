@@ -36,8 +36,11 @@ jobs:
   - name: Run tests
     stage: test
     image: "docker.io/golang:1.21.3"
+    variables:
+      - TEST: true
     script:
       - go test ./...
+    condition: TEST
 
   - name: Run checks
     stage: security
