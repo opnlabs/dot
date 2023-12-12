@@ -1,3 +1,6 @@
+// Package runner implements the backend that executes the jobs.
+//
+// Docker runner uses the docker runtime to execute jobs.
 package runner
 
 import (

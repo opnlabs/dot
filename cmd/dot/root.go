@@ -66,6 +66,7 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 }
 
+// Execute runs the root command for dot.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)

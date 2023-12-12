@@ -14,6 +14,7 @@ var l sync.Mutex
 
 const MaxNameLength = 20
 
+// ColorLogger provides an io.Writer that can output in color.
 type ColorLogger struct {
 	name   string
 	writer io.Writer

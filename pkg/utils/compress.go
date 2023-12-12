@@ -1,3 +1,5 @@
+// Package utils provides some utility functions to compress and decompress tar and tar.gz.
+// It also provides a logger that can output in color and implements io.Writer.
 package utils
 
 import (
@@ -13,8 +15,7 @@ import (
 
 const MaxFileSizeBytes = 50 * 1024 * 1024 // 50MB
 
-// Compress takes a path to a file or directory and creates a .tar.gzip file
-// at the outputPath location
+// Compress takes a path to a file or directory and creates a .tar.gzip file at the outputPath location.
 func Compress(path, outputPath string) error {
 	tarFile, err := os.Create(filepath.Clean(outputPath))
 	if err != nil {
@@ -58,8 +59,7 @@ func Compress(path, outputPath string) error {
 	})
 }
 
-// Decompress takes a location to a .tar.gzip file and a base path and
-// decompresses the contents wrt the base path
+// Decompress takes a location to a .tar.gzip file and a base path and decompresses the contents wrt the base path.
 func Decompress(tarPath, baseDir string) error {
 	tarFile, err := os.Open(filepath.Clean(tarPath))
 	if err != nil {
@@ -107,8 +107,7 @@ func Decompress(tarPath, baseDir string) error {
 	}
 }
 
-// CompressTar takes a path to a file or directory and creates a .tar file
-// at the outputPath location
+// CompressTar takes a path to a file or directory and creates a .tar file at the outputPath location.
 func CompressTar(path, outputPath string) error {
 	tarFile, err := os.Create(filepath.Clean(outputPath))
 	if err != nil {
@@ -149,8 +148,7 @@ func CompressTar(path, outputPath string) error {
 	})
 }
 
-// DecompressTar takes a location to a .tar file and a base path and
-// decompresses the contents wrt the base path
+// DecompressTar takes a location to a .tar file and a base path and decompresses the contents wrt the base path.
 func DecompressTar(tarPath, baseDir string) error {
 	tarFile, err := os.Open(filepath.Clean(tarPath))
 	if err != nil {
@@ -192,7 +190,7 @@ func DecompressTar(tarPath, baseDir string) error {
 	}
 }
 
-// TarCopy uses tar archive to copy src to dst to preserve the folder structure
+// TarCopy uses tar archive to copy src to dst to preserve the folder structure.
 func TarCopy(src, dst, tempDir string) error {
 	f, err := os.CreateTemp(tempDir, "tarcopy-*.tar.gzip")
 	if err != nil {

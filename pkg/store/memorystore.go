@@ -1,3 +1,4 @@
+// Package store implements a simple key-value store.
 package store
 
 import (
