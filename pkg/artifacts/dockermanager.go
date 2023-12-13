@@ -16,15 +16,7 @@ import (
 )
 
 type ArtifactManager interface {
-	// PublishArtifact takes in a jobID and path inside the job and
-	// moves the artifact to the artifact stores and returns a key
-	// that references the artifact
 	PublishArtifact(jobID, path string) (key string, err error)
-
-	// RetrieveArtifact takes in a jobID, keys slice and
-	// moves the artifact to the original path inside the job. If the keys is nil, all artifacts will be
-	// moved into the job. The original path is the path from where the artifact was pushed in
-	// PublishArtifact
 	RetrieveArtifact(jobID string, keys []string) error
 }
 
@@ -58,6 +50,8 @@ func NewDockerArtifactsManager(artifactsDir string) ArtifactManager {
 	}
 }
 
+// PublishArtifact takes in a jobID and path inside the job and moves the artifact to the artifact store and returns a key
+// that references the artifact.
 func (d *DockerArtifactsManager) PublishArtifact(jobID, path string) (string, error) {
 	ctx := context.Background()
 	r, _, err := d.cli.CopyFromContainer(ctx, jobID, path)
@@ -78,6 +72,9 @@ func (d *DockerArtifactsManager) PublishArtifact(jobID, path string) (string, er
 	return fname, d.artifactStore.Set(strings.TrimSpace(fname), filepath.Dir(path))
 }
 
+// RetrieveArtifact takes in a jobID, keys slice and moves the artifact to the original path inside the job.
+// If the keys is nil, all artifacts will be moved into the job.
+// The original path is the path from where the artifact was pushed in PublishArtifact.
 func (d *DockerArtifactsManager) RetrieveArtifact(jobID string, keys []string) error {
 	ctx := context.Background()
 

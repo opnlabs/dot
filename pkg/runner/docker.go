@@ -77,16 +77,22 @@ func NewDockerRunner(name string, artifactManager artifacts.ArtifactManager, doc
 	}
 }
 
+// WithImage takes the image url as input and returns a Docker runner.
+// The image url format is the same one used in docker pull <url>.
 func (d *DockerRunner) WithImage(image string) *DockerRunner {
 	d.image = image
 	return d
 }
 
+// WithSrc takes the src location and returns a Docker runner.
+// The src is the path to the folder that will be copied into the docker container for running the job.
 func (d *DockerRunner) WithSrc(src string) *DockerRunner {
 	d.src = filepath.Clean(src)
 	return d
 }
 
+// WithEnv is used to specify job variables.
+// Env is an array of map[string]any. The length of the map should be 1.
 func (d *DockerRunner) WithEnv(env []models.Variable) *DockerRunner {
 	variables := make([]string, 0)
 	for _, v := range env {
@@ -101,16 +107,19 @@ func (d *DockerRunner) WithEnv(env []models.Variable) *DockerRunner {
 	return d
 }
 
+// WithCmd specifies the script that should be run inside the container.
 func (d *DockerRunner) WithCmd(cmd []string) *DockerRunner {
 	d.cmd = cmd
 	return d
 }
 
+// WithEntrypoint can be used to override the default entrypoint in a docker image.
 func (d *DockerRunner) WithEntrypoint(entrypoint []string) *DockerRunner {
 	d.entrypoint = entrypoint
 	return d
 }
 
+// WithCredentials can be used to specify the credentials for a private image registry.
 func (d *DockerRunner) WithCredentials(username, password string) *DockerRunner {
 	authConfig := registry.AuthConfig{
 		Username: username,
@@ -125,11 +134,14 @@ func (d *DockerRunner) WithCredentials(username, password string) *DockerRunner 
 	return d
 }
 
+// CreatesArtifacts is used to specify the files that will be stored as artifacts.
+// The input is a list of file paths wrt the src specified in WithSrc.
 func (d *DockerRunner) CreatesArtifacts(artifacts []string) *DockerRunner {
 	d.artifacts = artifacts
 	return d
 }
 
+// Run creates the container based on the provided configuration.
 func (d *DockerRunner) Run(ctx context.Context) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {

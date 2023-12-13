@@ -39,6 +39,7 @@ func NewMemStore() Store {
 	return memStore
 }
 
+// Set is used to set a value to a key.
 func (m *MemStore) Set(key string, value interface{}) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
@@ -50,6 +51,7 @@ func (m *MemStore) Set(key string, value interface{}) error {
 	return nil
 }
 
+// Get is used to get a value from a key.
 func (m *MemStore) Get(key string) (interface{}, error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
@@ -61,6 +63,7 @@ func (m *MemStore) Get(key string) (interface{}, error) {
 	return m.store[key], nil
 }
 
+// Delete removes the specified key and value.
 func (m *MemStore) Delete(key string) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
@@ -72,6 +75,7 @@ func (m *MemStore) Delete(key string) error {
 	return nil
 }
 
+// Update can be used to change the value for a given key.
 func (m *MemStore) Update(key string, value interface{}) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
