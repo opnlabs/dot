@@ -1,5 +1,5 @@
 # Dot
-[![Dot](https://github.com/opnlabs/dot/actions/workflows/main.yml/badge.svg)](https://github.com/opnlabs/dot/actions/workflows/main.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/cvhariharan/dot)](https://goreportcard.com/report/github.com/cvhariharan/dot) [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/1a5800bae3c143c29e3559e3f46bffb1)](https://app.codacy.com/gh/opnlabs/dot/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+[![Go Reference](https://pkg.go.dev/badge/github.com/opnlabs/dot.svg)](https://pkg.go.dev/github.com/opnlabs/dot) [![Dot](https://github.com/opnlabs/dot/actions/workflows/main.yml/badge.svg)](https://github.com/opnlabs/dot/actions/workflows/main.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/cvhariharan/dot)](https://goreportcard.com/report/github.com/cvhariharan/dot) [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/1a5800bae3c143c29e3559e3f46bffb1)](https://app.codacy.com/gh/opnlabs/dot/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 
 A minimal CI. Designed to be local first.
 
