@@ -26,6 +26,15 @@ jobs:
       with:
         go-version: '1.21.1'
 
+    - name: Run tests
+      run: go test -coverprofile=coverage.out ./...
+
+    - name: Run codacy-coverage-reporter
+      uses: codacy/codacy-coverage-reporter-action@v1
+      with:
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: coverage.out
+
     - name: Run Dot
       run: go run main.go -m
 
