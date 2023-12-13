@@ -35,6 +35,7 @@ jobs:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         coverage-reports: coverage.out
         language: go
+        force-coverage-parser: go
 
     - name: Run Dot
       run: go run main.go -m
