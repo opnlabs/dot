@@ -3,7 +3,7 @@ module github.com/opnlabs/dot
 go 1.21.3
 
 require (
-	github.com/docker/docker v24.0.7+incompatible
+	github.com/docker/docker v24.0.9+incompatible
 	github.com/expr-lang/expr v1.15.7
 	github.com/fatih/color v1.15.0
 	github.com/go-playground/validator/v10 v10.16.0
