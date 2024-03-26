@@ -21,6 +21,11 @@ Refer the project [wiki](https://github.com/opnlabs/dot/wiki) to learn more abou
 ## Installation
 Get the latest version from the [releases](https://github.com/opnlabs/dot/releases) section.
 
+The latest version can also be installed using `go`.
+```bash
+go install github.com/opnlabs/dot@latest
+```
+
 ### Run using Docker
 ```bash
 docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v /path/to/project:/app ghcr.io/opnlabs/dot:latest -m
