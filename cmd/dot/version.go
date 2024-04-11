@@ -14,7 +14,7 @@ var (
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Shows the current version of Done CLI",
+	Short: "Shows the current version of Dot CLI",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Version:", version)
 		fmt.Println("Build Date:", builddate)

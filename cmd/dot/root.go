@@ -57,7 +57,7 @@ concurrently.`,
 
 func init() {
 	rootCmd.Flags().StringVarP(&jobFilePath, "job-file-path", "f", "dot.yml", "Path to the job file.")
-	rootCmd.Flags().BoolVarP(&mountDockerSocket, "mount-docker-socket", "m", false, "Mount docker socket. Required to run containers from done.")
+	rootCmd.Flags().BoolVarP(&mountDockerSocket, "mount-docker-socket", "m", false, "Mount docker socket. Required to run containers from dot.")
 	rootCmd.Flags().StringVarP(&username, "registry-username", "u", "", "Username for the container registry")
 	rootCmd.Flags().StringVarP(&password, "registry-password", "p", "", "Password / Token for the container registry")
 
