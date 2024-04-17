@@ -17,6 +17,7 @@ Refer the project [wiki](https://github.com/opnlabs/dot/wiki) to learn more abou
 - Simple yaml job definition
 - Bring your own Docker images. Supports private registries
 - Uses plain Docker
+- Supports conditional evaluation using expressions
 
 ## Installation
 Get the latest version from the [releases](https://github.com/opnlabs/dot/releases) section.
